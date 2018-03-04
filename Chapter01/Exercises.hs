@@ -1,4 +1,6 @@
--- 1
+module Chapter01.Exercises where
+
+  -- 1
 
 {-
 double (double 2)

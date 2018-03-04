@@ -1,3 +1,5 @@
+module Chapter02.Scratch where
+
 double x = x + x
 
 quadruple x = double (double x)
