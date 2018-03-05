@@ -1,4 +1,6 @@
--- 1.
+module Chapter03.Exercises where
+
+-- 1
 
 -- ['a', 'b', 'c'] :: [Char]
 -- ('a', 'b', 'c') :: (Char, Char, Char)
@@ -6,7 +8,7 @@
 -- ([False, True], ['0', '1']) :: ([Bool], [Char])
 -- [tail, init, reverse] :: [[a] -> [a]]
 
--- 2.
+-- 2
 
 bools :: [Bool]
 bools = [True, False]
@@ -23,7 +25,7 @@ copy x = (x, x)
 apply :: (a -> b) -> a -> b
 apply f x = f x
 
--- 3.
+-- 3
 
 second :: [a] -> a
 second xs = head (tail xs)
@@ -43,8 +45,8 @@ palindrome xs = reverse xs == xs
 -- This one is tricky:
 --      Why does f x return the same type as x?
 --      Because it's used as the argument again to f
-twice :: (a -> a) -> a -> a
+-- twice :: (a -> a) -> a -> a
 twice f x = f (f x)
 
--- 5.
+-- 5
 -- Because the type of a function says nothing about the values it returns.

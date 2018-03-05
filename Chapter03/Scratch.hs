@@ -1,3 +1,5 @@
+module Chapter03.Scratch where
+
 -- 3.5
 
 add :: (Int, Int) -> Int
@@ -7,16 +9,16 @@ zeroTo :: Int -> [Int]
 zeroTo n = [0..n]
 
 -- exception: undefined
-s0305 = head[]
+_ = head []
 
 -- 3.6
 
-add' :: Int -> (Int -> Int)
+add' :: Int -> (Int -> Int)           -- i.e. Int -> Int -> Int
 add' x y = x + y
 
-mult :: Int -> (Int -> (Int -> Int))
+mult :: Int -> (Int -> (Int -> Int))  -- i.e. Int -> Int -> Int -> Int
 mult x y z = x * y * z
 
 -- 3.7
 
-s0307 = length [sin, cos, tan]
+_ = length [sin, cos, tan]            -- length is polymorphic
