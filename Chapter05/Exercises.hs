@@ -1,3 +1,5 @@
+module Chapter05.Exercises where
+
 -- 1
 e1 = sum [x ^ 2 | x <- [1..100]]
 
