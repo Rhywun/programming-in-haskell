@@ -1,3 +1,5 @@
+module Chapter06.Scratch where
+
 -- 6.1 - Basic concepts
 
 factorial :: Int -> Int
@@ -19,7 +21,7 @@ reverse' []     = []
 reverse' (x:xs) = reverse' xs ++ [x]
 
 insert :: Ord a => a -> [a] -> [a]
-insert x []     = [x]
+insert x []                 = [x]
 insert x (y:ys) | x <= y    = x : y : ys
                 | otherwise = y : insert x ys
 
@@ -28,7 +30,7 @@ isort :: Ord a => [a] -> [a]
 isort []     = []
 isort (x:xs) = insert x (isort xs)
 
--- 6.3 - Multiple arguments
+-- 6.3 - Multiple arguments                                   <-- Continue here
 
 zip' :: [a] -> [b] -> [(a, b)]
 zip' [] _          = []

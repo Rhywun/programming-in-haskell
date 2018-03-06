@@ -1,3 +1,5 @@
+module Chapter06.Exercises where
+
 -- 1
 
 factorial :: Int -> Int
