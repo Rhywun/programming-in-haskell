@@ -7,29 +7,42 @@ import Data.Char
 --
 
 -- Converts a char 'a' to 'z' to an integer 0 to 25
+-- E.g. char2int 'h' = 7
+char2int :: Char -> Int
 char2int c = ord c - ord 'a'
 
 -- Converts an integer 0 to 25 to a char 'a' to 'z'
+-- E.g. int2char 7 = 'h'
+int2char :: Int -> Char
 int2char n = chr (ord 'a' + n)
 
--- Shifts char c to the right by n letters; operates only on lower-case letters; wraps at alphabet end
-shift n c | isLower c = int2char ((char2int c + n) `mod` 26)
-          | otherwise = c
+-- Shifts char c to the right by n letters; operates only on lower-case letters;
+-- wraps at alphabet end
+-- E.g. char2int 3 'h' = 'k'
+shift :: Int -> Char -> Char
+shift n c | isAsciiLower c = int2char ((char2int c + n) `mod` 26)
+          | otherwise      = c
 
 -- Encodes string xs with shift factor n
+-- E.g. encode 3 "haskell is fun" = "kdvnhoo lv ixq"
+-- E.g. encode -3 "kdvnhoo lv ixq" = "haskell is fun"
+encode :: Int -> String -> String
 encode n xs = [shift n x | x <- xs]
 
 --
 -- Frequency tables
 --
 
--- Percentage frequencies for the 26 letters of the English alphabet based on a large sample of text
+-- Percentage frequencies for the 26 letters of the English alphabet based on a
+-- large sample of text
+table :: Float
 table = [8.1, 1.5, 2.8, 4.2, 12.7, 2.2, 2.0, 6.1, 7.0,
          0.2, 0.8, 4.0, 2.4, 6.7, 7.5, 1.9, 0.1, 6.0,
          6.3, 9.0, 2.8, 1.0, 2.4, 0.2, 2.0, 0.1]
 
 -- n is what percent of m
 -- E.g. percent 5 15 = 33.33333333333333
+percent :: Int -> Int -> Float
 percent n m = (fromIntegral n / fromIntegral m) * 100
 
 -- Counts the number of lower-case chars in string xs
