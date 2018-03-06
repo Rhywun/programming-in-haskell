@@ -1,4 +1,6 @@
--- 1
+module Chapter04.Exercises where
+
+  -- 1
 
 halve :: [a] -> ([a], [a])
 halve xs = (take n xs, drop n xs)
@@ -85,6 +87,7 @@ mult' = \x -> (\y -> (\z -> x * y * z))
 
 -- 8
 
+-- Double a digit and subtract 9 if the result is greater than 9
 luhnDouble :: Int -> Int
 luhnDouble x = if d > 9 then d - 9 else d
                where d = x * 2
