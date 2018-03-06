@@ -1,7 +1,7 @@
 module Chapter05.Exercises where
 
 -- 1
-e1 = sum [x ^ 2 | x <- [1..100]]
+e1 = sum [x^2 | x <- [1..100]]
 
 -- 2
 grid m n = [(x, y) | x <- [0..m], y <- [0..n]]
@@ -11,11 +11,7 @@ square n = [(x, y) | (x, y) <- grid n n, x /= y]
 
 -- 4
 replicate' :: Int -> a -> [a]
-replicate' n x = [fst (x, y) | y <- [1..n]]
-
--- or
-replicate'' :: Int -> a -> [a]
-replicate'' n x = [x | _ <- [1..n]]
+replicate' n x = [x | _ <- [1..n]]
 
 -- 5
 pyths :: Int -> [(Int, Int, Int)]

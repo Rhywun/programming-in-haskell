@@ -35,13 +35,12 @@ encode n xs = [shift n x | x <- xs]
 
 -- Percentage frequencies for the 26 letters of the English alphabet based on a
 -- large sample of text
-table :: Float
-table = [8.1, 1.5, 2.8, 4.2, 12.7, 2.2, 2.0, 6.1, 7.0,
-         0.2, 0.8, 4.0, 2.4, 6.7, 7.5, 1.9, 0.1, 6.0,
-         6.3, 9.0, 2.8, 1.0, 2.4, 0.2, 2.0, 0.1]
+table :: [Float]
+table = [8.1, 1.5, 2.8, 4.2, 12.7, 2.2, 2.0, 6.1, 7.0, 0.2, 0.8, 4.0, 2.4,
+         6.7, 7.5, 1.9, 0.1,  6.0, 6.3, 9.0, 2.8, 1.0, 2.4, 0.2, 2.0, 0.1]
 
 -- n is what percent of m
--- E.g. percent 5 15 = 33.33333333333333
+-- E.g. percent 5 15 = 33.333336
 percent :: Int -> Int -> Float
 percent n m = (fromIntegral n / fromIntegral m) * 100
 
@@ -62,11 +61,12 @@ freqs xs = [percent (count x xs) n | x <- ['a'..'z']]
 -- Cracking the cipher
 --
 
--- Chi-square statistic to compare a list of observed frequencies os with a list
--- of expected frequencies es - the smaller result, the better match between the lists
+-- Chi-square statistic to compare a list of observed frequencies `os` with a list of
+-- expected frequencies `es` - the smaller the result, the better match between the lists
 chisqr os es = sum [((o - e) ^ 2) / e | (o, e) <- zip os es]
 
--- Rotates the elements of list xs n places to the left, wrapping around at the start of the list
+-- Rotates the elements of list xs n places to the left, wrapping around at the start
+-- of the list
 -- E.g. rotate 3 [1,2,3,4,5] = [4,5,1,2,3]
 rotate n xs = drop n xs ++ take n xs
 
