@@ -1,6 +1,7 @@
 module Chapter06.Exercises where
 
 -- 1
+-- Without a test for negative numbers, the original definition blows the stack.
 
 factorial :: Int -> Int
 factorial 0 = 1
@@ -87,7 +88,6 @@ elem' e (x:xs) | x == e    = True
 -- 7
 
 -- E.g. merge [2,5,6] [1,3,4] = [1,2,3,4,5,6]
--- TODO: This doesn't work
 merge :: Ord a => [a] -> [a] -> [a]
 merge xs [] = xs
 merge [] ys = ys

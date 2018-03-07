@@ -30,7 +30,7 @@ isort :: Ord a => [a] -> [a]
 isort []     = []
 isort (x:xs) = insert x (isort xs)
 
--- 6.3 - Multiple arguments                                   <-- Continue here
+-- 6.3 - Multiple arguments
 
 zip' :: [a] -> [b] -> [(a, b)]
 zip' [] _          = []
@@ -44,11 +44,11 @@ drop' n (_:xs) = drop' (n - 1) xs
 
 -- 6.4 - Multiple recursion
 
--- Return the first n items of the Fibonacci sequence - very inefficient!
+-- Return the first n items of the Fibonacci sequence - very inefficient already at n == 30!
 fib :: Int -> Int
 fib 0 = 0
 fib 1 = 1
-fib n = fib (n-2) + fib (n-1)
+fib n = fib (n - 2) + fib (n - 1)
 
 qsort :: Ord a => [a] -> [a]
 qsort []     = []
@@ -79,6 +79,14 @@ odds (_:xs) = evens xs
 
 -- 6.6 - Advice on recursion
 -- See text for full discussion of `product`, `drop`, and `init`
+
+{-
+Step 1: define the type
+Step 2: enumerate the cases
+Step 3: define the simple cases
+Step 4: define the other cases
+Step 5: generalise and simplify
+-}
 
 -- Removes the last element from a non-empty list
 init' :: [a] -> [a]
