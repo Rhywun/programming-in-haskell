@@ -105,6 +105,10 @@ luhn i j k l = n `mod` 10 == 0
                where n = luhnDouble i + j + luhnDouble k + l
 -}
 
+-- E.g. luhn [4,2,6,6,8,4,1,1,5,9,3,4,9,9,5,8] == True
+-- E.g. luhn [5,2,5,1,0,8,0,1,2,9,0,1,1,3,7,2] == True
+-- E.g. luhn [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] == False
+-- E.g. luhn [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1] == False
 luhn :: [Int] -> Bool
 luhn xs = sum (altMap f1 f2 xs) `mod` 10 == 0
           where f1 | even $ length xs = luhnDouble
@@ -115,4 +119,3 @@ luhn xs = sum (altMap f1 f2 xs) `mod` 10 == 0
 -- Choose the functions f1 and f2 based on the length of the list:
 --    even? f1 = luhnDouble, f2 = id
 --    odd?  f1 = id, f2 = luhnDouble
---
