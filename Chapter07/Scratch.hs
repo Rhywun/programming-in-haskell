@@ -1,3 +1,5 @@
+module Chapter07.Scratch where
+
 -- 7.1 - Basic concepts
 
 -- Due to currying, this...
@@ -51,23 +53,34 @@ length'' :: [a] -> Int
 length'' = foldl (\n _ -> n + 1) 0
 
 reverse'' :: [a] -> [a]
-reverse'' = foldl (\xs x -> x:xs) []
+-- reverse'' = foldl (\xs x -> x:xs) []
+reverse'' = foldl (flip (:)) []
 
 -- 7.5 - The composition operator
 
--- We can rewrite these more simply:
+-- This definition makes it clear that a function is returned:
+{-
+(.) :: (b -> c) -> (a -> b) -> a -> c
+f . g = \x -> f (g x)
+-}
 
-twice' :: (a -> a) -> a -> a
+-- We can now rewrite some function definitions more simply:
+
+-- odd n = not (even n)
+odd' = not . even
+
 -- twice f x = f (f x)
-twice' f     = f . f
+twice' f = f . f
 
-sumsqreven' :: [Int] -> Int
 -- sumsqreven ns = sum (map (^2) (filter even ns))
-sumsqreven'      = sum . map (^2) . filter even
+sumsqreven' = sum . map (^2) . filter even
 
--- Wut?
+-- The composition of a list of functions uses `id` as the identity:
 compose :: [a -> a] -> (a -> a)
 compose = foldr (.) id
 
--- 7.6
--- See BinaryStringTransmitter.hs
+-- 7.6 - Binary string transmitter
+-- See Binary.hs
+
+-- 7.7 - Voting algorithms
+-- See Voting.hs
