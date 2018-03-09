@@ -167,12 +167,5 @@ occurs x (Node l y r) | x == y    = True
 
 -- 8.5 - Class and instance declarations
 
-
-
-
-
-
-
-
-
--- continue here
+-- 8.6 - Tautology checker
+-- See Tautology.hs
