@@ -88,7 +88,46 @@ balance xs  = Node' (balance ys) (balance zs)
 
 -- 5
 
+-- An expression consists of values and the Add operator
 data Expr = Val Int | Add Expr Expr deriving (Eq, Show)
 
+e = Add (Val 1) (Val 2)
+e' = Add (Val 1) (Add (Val 2) (Val 3))
+
 folde :: (Int -> a) -> (a -> a -> a) -> Expr -> a
--- lolwut
+folde f g (Val n)   = f n
+folde f g (Add l r) = g (folde f g l) (folde f g r)
+
+-- 6
+
+-- Evaluate an expression
+-- E.g. eval e == 3
+-- E.g. eval e' == 6
+eval :: Expr -> Int
+eval = folde id (+)
+
+-- Count the number of values in an expression
+-- E.g. size e == 2
+-- E.g. size e' == 3
+size :: Expr -> Int
+size = folde (const 1) (+)
+
+-- 7
+
+{-
+instance Eq a => Eq (Maybe a) where
+  Nothing == _     = Nothing
+  _ == Nothing     = Nothing
+  Just x == Just y = x == y
+
+instance Eq a => Eq [a] where
+  [] == [] = True
+  (x:xs) == (y:ys) = x == y && xs == ys
+-}
+
+-- 8
+-- See Tautology.hs
+-- PASS on the "logical equivalence (<=>)" bit, because WTF?
+
+-- 9
+-- See Machine.hs
