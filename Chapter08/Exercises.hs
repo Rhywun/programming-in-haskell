@@ -53,3 +53,42 @@ original code! So wouldn't the extra function call in fact make this version LES
 -}
 
 -- 3
+
+data Tree' a = Leaf' a | Node' (Tree' a) (Tree' a) deriving (Eq, Show)
+
+-- A balanced tree
+t' :: Tree' Int
+t' = Node' (Node' (Leaf' 1) (Leaf' 2))
+           (Node' (Leaf' 3) (Leaf' 4))
+
+-- An unbalanced tree
+t'' :: Tree' Int
+t'' = Node' (Node' (Leaf' 1) (Leaf' 2))
+            (Node' (Node' (Node' (Leaf' 3) (Leaf' 4)) (Node' (Leaf' 5) (Leaf' 6))) (Leaf' 7))
+
+-- Count the number of leaves in a tree
+leaves :: Tree' a -> Int
+leaves (Leaf' _)   = 1
+leaves (Node' l r) = leaves l + leaves r
+
+-- Return whether a tree is balanced - I cheated here but I get it
+balanced :: Tree' a -> Bool
+balanced (Leaf' _)   = True
+balanced (Node' l r) = abs (leaves l - leaves r) <= 1 && balanced l && balanced r
+
+-- 4
+-- Cheat
+
+halve xs = splitAt (length xs `div` 2) xs
+
+-- E.g. balance [1,2,3,4,5,6,7,8,9]
+balance [x] = Leaf' x
+balance xs  = Node' (balance ys) (balance zs)
+              where (ys, zs) = halve xs
+
+-- 5
+
+data Expr = Val Int | Add Expr Expr deriving (Eq, Show)
+
+folde :: (Int -> a) -> (a -> a -> a) -> Expr -> a
+-- lolwut
