@@ -199,3 +199,10 @@ main = print (solutions' ns 765)
 
 -- 4
 e4 = length $ exprs ns
+-- Wrong answer - maybe because of modifications made to improve the performance?
+
+-- 5
+-- PASS
+
+-- 6
+-- PASS
