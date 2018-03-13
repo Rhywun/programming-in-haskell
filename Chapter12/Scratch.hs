@@ -2,6 +2,8 @@
 
 module Chapter12.Scratch where
 
+import Data.Char
+
 --
 -- 12.1 - Functors
 --
@@ -298,4 +300,36 @@ mlabel (Leaf _)   = do { n <- fresh; return (Leaf n) }
 mlabel (Node l r) = do { l' <- mlabel l; r' <- mlabel r; return (Node l' r') }
 
 -- Generic functions
+
+mapM' :: Monad m => (a -> m b) -> [a] -> m [b]
+mapM' f []     = return []
+mapM' f (x:xs) = do { y <- f x; ys <- mapM' f xs; return (y:ys) }
+
+-- Convert a digit char to an int
+-- E.g. mapM' conv "1234" == Just [1,2,3,4]
+-- (note: map conv "1234" == [Just 1,Just 2,Just 3,Just 4])
+conv :: Char -> Maybe Int
+conv c | isDigit c = Just (digitToInt c)
+       | otherwise = Nothing
+
+-- E.g. filterM' (\x -> [True,False]) [1,2,3] == [[1,2,3],[1,2],[1,3],[1],[2,3],[2],[3],[]]
+-- "all possible ways of including (True) or excluding (False) each element of the list"
+filterM' :: Monad m => (a -> m Bool) -> [a] -> m [a]
+filterM' p []     = return []
+filterM' p (x:xs) = do { b <- p x; ys <- filterM' p xs; return (if b then x:ys else ys) }
+
+-- Generalisation of `concat` - flattens a nested monadic value
+-- E.g. join' [[1,2],[3,4],[5,6]] == [1,2,3,4,5,6]
+--      join' (Just (Just 1)) == Just 1
+join' :: Monad m => m (m a) -> m a
+-- join' mmx = do { mx <- mmx; x <- mx; return x }
+join' mmx = do { mx <- mmx; mx }
+
+-- Monad laws
+
+{-
+  return x >>= f   = f x
+  mx >>= return    = mx
+  (mx >>= f) >>= g = mx >>= (\x -> (f x >>= g))
+-}
 
