@@ -1,4 +1,4 @@
-            {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module Chapter12.Scratch where
 
@@ -110,10 +110,10 @@ getChars' n = sequenceA (replicate n getChar)
 -}
 
 {-
-  pure g <*> x1 <*> x2 <*> ... <*> xn   <-- "applicative style"
-  fmap g x = pure g <*> x               <-- fmap can be defined with the applicative primitives
-  g <$> x = fmap g x                    <-- <$> is an infix variant of fmap
-  g <$> x1 <*> x2 <*> ... <*> nx        <-- thus, an alternate applicative style using infix <$>
+  pure g <*> x1 <*> x2 <*> ... <*> xn <-- "applicative style"
+  fmap g x = pure g <*> x             <-- fmap can be defined with applicative primitives
+  g <$> x = fmap g x                  <-- <$> is an infix variant of fmap
+  g <$> x1 <*> x2 <*> ... <*> nx      <-- thus, an alt. applicative style using infix <$>
 -}
 
 --
@@ -216,8 +216,86 @@ instance Monad [] where
 pairs :: [a] -> [b] -> [(a, b)]
 pairs xs ys = do { x <- xs; y <- ys; return (x, y) }
 
+{-
+instance Monad IO where
+  return :: a -> IO a
+  return x = ...(built-in)...
 
+  (>>=) :: IO a -> (a -> IO b) -> IO b
+  mx >>= f = ...(built-in)...
+-}
 
+-- The state monad
+-- See diagrams in the book!
 
+type State = Int
 
--- Cont. p. 168
+-- A state transformer - including a return type `a`
+newtype ST a = S (State -> (a, State))
+
+-- Convenience function to remove the dummy constructor
+app :: ST a -> State -> (a, State)
+app (S st) = st
+
+instance Functor ST where
+  -- Applies a function to the result value of a ST
+  fmap :: (a -> b) -> ST a -> ST b
+  fmap g st = S (\s -> let (x, s') = app st s in (g x, s'))
+
+instance Applicative ST where
+  -- Transforms a value into a ST that simply returns this value
+  pure :: a -> ST a
+  pure x = S (\s -> (x, s))
+
+  -- Applies a ST that returns a function to a ST that returns an argument to
+  -- give a ST that returns the result of applying the function to the argument
+  (<*>) :: ST (a -> b) -> ST a -> ST b
+  stf <*> stx = S (\s ->
+                let (f, s')  = app stf s
+                    (x, s'') = app stx s' in (f x, s''))
+
+instance Monad ST where
+  -- Applies a ST to an initial state s, then applies the function f to the
+  -- resulting value x to give a new ST f x, which is then applied to the new
+  -- state s' to give the final result
+  (>>=) :: ST a -> (a -> ST b) -> ST b
+  st >>= f = S (\s -> let (x, s') = app st s in app (f x) s')
+
+-- Relabelling trees
+-- An example of stateful programming
+
+-- Defined above:
+-- data Tree a = Leaf a | Node (Tree a) (Tree a) deriving Show
+
+tree = Node (Node (Leaf 'a') (Leaf 'b')) (Leaf 'c') :: Tree Char
+
+-- Relabel a tree with a sequence of ints, return the next fresh int
+-- Notice that we need to thread an int state through the computation
+-- E.g. fst $ rlabel tree 0 == Node (Node (Leaf 0) (Leaf 1)) (Leaf 2)
+--      snd $ rlabel tree 0 == 3
+rlabel :: Tree a -> Int -> (Tree Int, Int)
+rlabel (Leaf _)   n = (Leaf n, n + 1)
+rlabel (Node l r) n = (Node l' r', n'')
+                      where (l', n')  = rlabel l n
+                            (r', n'') = rlabel r n'
+
+-- Let's use a ST instead, where the state is the next fresh integer
+
+fresh = S (\n -> (n, n + 1)) :: ST Int
+
+-- Rewrite `rlabel` in applicative style:
+-- E.g. fst (app (alabel tree) 0) == Node (Node (Leaf 0) (Leaf 1)) (Leaf 2)
+--      snd (app (alabel tree) 0) == 3
+alabel :: Tree a -> ST (Tree Int)
+alabel (Leaf _)   = Leaf <$> fresh
+alabel (Node l r) = Node <$> alabel l <*> alabel r
+
+-- Monadic version:
+-- E.g. fst (app (mlabel tree) 0) == Node (Node (Leaf 0) (Leaf 1)) (Leaf 2)
+--      snd (app (mlabel tree) 0) == 3
+mlabel :: Tree a -> ST (Tree Int)
+mlabel (Leaf _)   = do { n <- fresh; return (Leaf n) }
+mlabel (Node l r) = do { l' <- mlabel l; r' <- mlabel r; return (Node l' r') }
+
+-- Generic functions
+
