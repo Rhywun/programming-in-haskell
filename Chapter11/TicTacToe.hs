@@ -117,6 +117,8 @@ chop n xs = take n xs : chop n (drop n xs)
 -- Reading a number
 --
 
+-- Read a number from stdin, with error checking
+-- (Note: support for deleting with Backspace not included)
 getNat :: String -> IO Int
 getNat prompt = do putStr prompt
                    xs <- getLine
@@ -130,4 +132,33 @@ getNat prompt = do putStr prompt
 -- Human vs human
 --
 
--- cont. p. 144
+tictactoe :: IO ()
+tictactoe = run empty O
+
+-- An action that implements the game using two mutually recursive functions
+-- `run` and `run'`
+
+run :: Grid -> Player -> IO ()
+run grid player = do cls
+                     goto (1, 1)
+                     putGrid grid
+                     run' grid player
+                  where cls = putStr "\ESC[2J"
+                        goto (x,y) = putStr ("\ESC[" ++ show y ++ ";" ++ show x ++ "H")
+
+run' :: Grid -> Player -> IO ()
+run' grid player | wins O grid = putStrLn "Player O wins!\n"
+                 | wins X grid = putStrLn "Player X wins!\n"
+                 | full grid   = putStrLn "It's a draw!\n"
+                 | otherwise   = do i <- getNat (prompt player)
+                                    case move grid i player of
+                                      []      -> do putStrLn "ERROR: Invalid move"
+                                                    run' grid player
+                                      [grid'] -> run grid' (next player)
+                 where prompt player = "Player " ++ show player ++ ", enter your move: "
+
+--
+-- Game trees
+--
+
+-- cont. p. 147
