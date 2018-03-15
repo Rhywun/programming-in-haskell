@@ -161,4 +161,40 @@ run' grid player | wins O grid = putStrLn "Player O wins!\n"
 -- Game trees
 --
 
--- cont. p. 147
+g3 = [[O,B,B],[X,X,O],[X,O,B]] :: Grid    -- A grid in mid-play, with several moves left
+
+data Tree a = Node a [Tree a] deriving Show
+
+-- Build a tree of all possible future moves starting with this grid and player
+gameTree :: Grid -> Player -> Tree Grid
+gameTree grid player = Node grid [gameTree grid' (next player) | grid' <- moves grid player]
+
+-- Return a list of possible, valid moves for this grid and player
+-- E.g. moves g3 O == [[[O,O,B],[X,X,O],[X,O,B]],[[O,B,O],[X,X,O],[X,O,B]],[[O,B,B],[X,X,O],[X,O,O]]]
+moves :: Grid -> Player -> [Grid]
+moves grid player | won grid  = []
+                  | full grid = []
+                  | otherwise = concat [move grid i player | i <- [0..((size^2) - 1)]]
+
+{-
+  FIXME: Seems like the next player is already known. Why include it as a parameter?
+  E.g. turn g3 == O    <- It's O's turn, X should not be considered
+-}
+
+--
+-- Pruning the tree
+--
+
+-- Prune a tree to a given depth
+-- E.g. prune 5 (gameTree empty O) == ...too long to list...
+prune :: Int -> Tree a -> Tree a
+prune 0 (Node x _)  = Node x []
+prune n (Node x ts) = Node x [prune (n - 1) t | t <- ts]
+
+-- Maximum prune depth
+depth = 9 :: Int
+
+--
+-- Minimax algorithm
+--
+
