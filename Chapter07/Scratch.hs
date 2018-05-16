@@ -60,6 +60,10 @@ sum' = foldr (+) 0
 
 sum'' xs = foldr (+) 0 xs -- ...but not here
 
+foldr' :: (a -> b -> b) -> b -> [a] -> b
+foldr' f v []     = v
+foldr' f v (x:xs) = f x (foldr' f v xs)
+
 length' :: [a] -> Int
 length' = foldr (\_ n -> 1 + n) 0
 
@@ -70,7 +74,11 @@ snoc x xs = xs ++ [x]
 reverse' :: [a] -> [a]
 reverse' = foldr snoc []
 
+--
 -- 7.4 - The foldl function
+--
+sum''' xs = foldl (+) 0 xs -- (+) is associative
+
 length'' :: [a] -> Int
 length'' = foldl (\n _ -> n + 1) 0
 
