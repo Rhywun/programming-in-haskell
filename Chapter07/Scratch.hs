@@ -84,7 +84,7 @@ length'' = foldl (\n _ -> n + 1) 0
 
 reverse'' :: [a] -> [a]
 -- reverse'' = foldl (\xs x -> x:xs) []
-reverse'' = foldl (flip (:)) []
+reverse'' = foldl (flip (:)) [] -- Recommended by hlint
 
 --
 -- 7.5 - The composition operator
@@ -94,7 +94,9 @@ reverse'' = foldl (flip (:)) []
 (.) :: (b -> c) -> (a -> b) -> a -> c
 f . g = \x -> f (g x)
 -}
+--
 -- We can now rewrite some function definitions more simply:
+--
 -- odd n = not (even n)
 odd' = not . even
 
@@ -104,10 +106,14 @@ twice' f = f . f
 -- sumsqreven ns = sum (map (^2) (filter even ns))
 sumsqreven' = sum . map (^ 2) . filter even
 
--- The composition of a list of functions uses `id` as the identity:
+-- The composition of a list of functions uses `id` as the identity (or "starting point"):
 compose :: [a -> a] -> (a -> a)
 compose = foldr (.) id
+--
+--
 -- 7.6 - Binary string transmitter
 -- See Binary.hs
+--
+--
 -- 7.7 - Voting algorithms
 -- See Voting.hs
