@@ -115,21 +115,29 @@ data Expr = Val Int | Add Expr Expr deriving (Eq, Show)
 expr1 = Add (Val 1) (Val 2)
 expr2 = Add (Val 1) (Add (Val 2) (Val 3))
 
+{-
+folde (+1) (+) expr1 -- 5
+folde (+1) (+) expr2 -- 9
+-}
 folde :: (Int -> a) -> (a -> a -> a) -> Expr -> a
-folde f g (Val n  ) = f n
+folde f _ (Val n  ) = f n
 folde f g (Add l r) = g (folde f g l) (folde f g r)
 
 -- 6
 
 -- Evaluate an expression
--- E.g. eval e == 3
--- E.g. eval e' == 6
+{-
+eval expr1 -- 3
+eval expr2 -- 6
+-}
 eval :: Expr -> Int
 eval = folde id (+)
 
 -- Count the number of values in an expression
--- E.g. size e == 2
--- E.g. size e' == 3
+{-
+size expr1 -- 2
+size expr2 -- 3
+-}
 size :: Expr -> Int
 size = folde (const 1) (+)
 
@@ -142,7 +150,7 @@ instance Eq a => Eq (Maybe a) where
   Just x == Just y = x == y
 
 instance Eq a => Eq [a] where
-  [] == [] = True
+  [] == []         = True
   (x:xs) == (y:ys) = x == y && xs == ys
 -}
 
