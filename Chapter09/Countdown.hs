@@ -1,5 +1,3 @@
-module Chapter09.Countdown where
-
 --
 -- 9.2 - Arithmetic operators
 --
@@ -18,11 +16,11 @@ valid Sub 2 3 -- False
 valid Div 2 3 -- False
 -}
 valid :: Op -> Int -> Int -> Bool
-valid Add _ _ = True
--- valid Add x y = x <= y
+-- valid Add _ _ = True
+valid Add x y = x <= y                          -- See §9.9
 valid Sub x y = x > y
-valid Mul _ _ = True
--- valid Mul x y = x /= 1 && y /= 1 && x <= y
+-- valid Mul _ _ = True
+valid Mul x y = x /= 1 && y /= 1 && x <= y      -- See §9.9
 valid Div x y = y /= 1 && x `mod` y == 0
 
 -- Perform an operation
@@ -105,8 +103,8 @@ choices [1,2,3] -- [[],[3],[2],[2,3],[3,2],[1],[1,3],[3,1],[1,2],[2,1],
                     [1,2,3],[2,1,3],[2,3,1],[1,3,2],[3,1,2],[3,2,1]]
 -}
 choices :: [a] -> [[a]]
-choices = concatMap perms . subs
--- choices xs = [ zs | ys <- subs xs, zs <- perms ys ]                     -- Exercise 1
+-- choices = concatMap perms . subs
+choices xs = [ zs | ys <- subs xs, zs <- perms ys ]                     -- Exercise 1
 
 --
 -- 9.5 - Formalising the problem
@@ -167,7 +165,7 @@ solutions ns n = [ e | ns' <- choices ns, e <- exprs ns', eval e == [n] ]
 -- 9.7 - Performance testing
 --
 
--- All answers print in about 4.5 seconds. Can we do better?
+-- All answers print in about 4.3 seconds. Can we do better?
 
 {-
 main :: IO ()
@@ -175,7 +173,7 @@ main = print (solutions ns 765)
 -}
 
 --
--- Combining generation and evaluation
+-- 9.8 - Combining generation and evaluation
 --
 
 type Result = (Expr, Int)
@@ -194,37 +192,57 @@ results ns =
   | (ls, rs) <- split ns
   , lx       <- results ls
   , ry       <- results rs
-  , res      <- combine' lx ry
+  , res      <- combine lx ry
   ]
  where
-  combine' (l, x) (r, y) = [ (App o l r, apply o x y) | o <- ops, valid o x y ]
+  combine (l, x) (r, y) = [ (App o l r, apply o x y) | o <- ops, valid o x y ]
   ops = [Add, Sub, Mul, Div]
 
 solutions' :: [Int] -> Int -> [Expr]
 solutions' ns n = [ e | ns' <- choices ns, (e, m) <- results ns', m == n ]
 
--- Now it completes in about 1/3 second. Can we still do better??
+-- Now it completes in less than 1/3 second. Can we still do better??
 
 main :: IO ()
 main = print (solutions' ns 765)
 
 --
--- Exploiting algebraic properties
+-- 9.9 - Exploiting algebraic properties
 --
 
 -- See modifications to `valid` above
 
--- Completes in 0.06 seconds!
+-- Completes in 0.05 seconds!
 
 --
--- Exercises
+-- 9.11 - Exercises
 --
 
 -- 1
 -- See above
 
 -- 2
--- PASS
+
+-- Remove the first occurrence of a value from a list
+{-
+remFirst 2 [1,2,3]   -- [1,3]
+remFirst 2 [1,2,2,3] -- [1,2,3]
+-}
+remFirst :: Eq a => a -> [a] -> [a]
+remFirst _ [] = []
+remFirst x (y : ys) | x == y    = ys
+                    | otherwise = y : remFirst x ys
+
+-- Cheated here but I get it
+-- Decide if one list is chosen from another
+{-
+isChoice [1,2,3] [2,3,4]     -- False
+isChoice [1,2,3] [0,1,2,3,4] -- True
+-}
+isChoice :: Eq a => [a] -> [a] -> Bool
+isChoice []       _  = True
+isChoice _        [] = False
+isChoice (x : xs) ys = elem x ys && isChoice xs (remFirst x ys)
 
 -- 3
 -- PASS
