@@ -1,6 +1,6 @@
-import Data.Char
-import Data.List
-import System.IO
+import           Data.Char
+import           Data.List
+import           System.IO
 
 --
 -- Basic declarations
@@ -14,8 +14,8 @@ type Grid = [[Player]]  -- Inner and outer lists assumed to have length `size`
 -- The ordering here is important for the unbeatable "minimax" algorithm
 data Player = O | B | X deriving (Eq, Ord, Show)
 
-g1 = [[B,O,O],[O,X,O],[X,X,X]] :: Grid    -- A not-full grid, X wins
-g2 = [[O,O,X],[X,X,O],[O,X,O]] :: Grid    -- A full grid, nobody wins
+g1 = [[B, O, O], [O, X, O], [X, X, X]] :: Grid    -- A not-full grid, X wins
+g2 = [[O, O, X], [X, X, O], [O, X, O]] :: Grid    -- A full grid, nobody wins
 
 -- Who is the next player after the given player?
 next :: Player -> Player
@@ -43,19 +43,21 @@ full = notElem B . concat
 --      turn g1 = O
 turn :: Grid -> Player
 turn grid = if os <= xs then O else X
-            where os = length (filter (== O) ps)
-                  xs = length (filter (== X) ps)
-                  ps = concat grid
+ where
+  os = length (filter (== O) ps)
+  xs = length (filter (== X) ps)
+  ps = concat grid
 
 -- Has this player won? Return whether the player owns a contiguous row, column, or diagonal
 -- E.g wins X g1 == True
 wins :: Player -> Grid -> Bool
 wins player grid = any line (rows ++ cols ++ diags)
-                   where line = all (== player)
-                         rows = grid
-                         cols = transpose grid
-                         diags = [diag grid, diag (map reverse grid)]
-                         diag grid = [grid !! n !! n | n <- [0..size - 1]]
+ where
+  line  = all (== player)
+  rows  = grid
+  cols  = transpose grid
+  diags = [diag grid, diag (map reverse grid)]
+  diag grid = [ grid !! n !! n | n <- [0 .. size - 1] ]
 
 -- Has either player won?
 -- E.g. won g1 == True
@@ -69,13 +71,14 @@ won grid = wins O grid || wins X grid
 
 putGrid :: Grid -> IO ()
 putGrid = putStrLn . unlines . concat . interleave bar . map showRow
-          where bar = [replicate ((size * 4) - 1) '-']
+  where bar = [replicate ((size * 4) - 1) '-']
 
 -- E.g. showRow [X,O,X] == ["   |   |   "," X | O | X ","   |   |   "]
 showRow :: [Player] -> [String]
 showRow = beside . interleave bar . map showPlayer
-          where beside = foldr1 (zipWith (++))
-                bar    = replicate 3 "|"
+ where
+  beside = foldr1 (zipWith (++))
+  bar    = replicate 3 "|"
 
 showPlayer :: Player -> [String]
 showPlayer O = ["   ", " O ", "   "]
@@ -85,9 +88,9 @@ showPlayer X = ["   ", " X ", "   "]
 -- Return a new list with a value interleaved between each element of a specified list
 -- E.g. interleave '-' "hello" == "h-e-l-l-o"
 interleave :: a -> [a] -> [a]
-interleave x []     = []
-interleave x [y]    = [y]
-interleave x (y:ys) = y : x : interleave x ys
+interleave x []       = []
+interleave x [y     ] = [y]
+interleave x (y : ys) = y : x : interleave x ys
 
 --
 -- Making a move
@@ -97,15 +100,15 @@ interleave x (y:ys) = y : x : interleave x ys
 -- E.g. valid g1 0 == True        (position 0 is the top-left corner)
 --      valid g2 0 == False
 valid :: Grid -> Int -> Bool
-valid grid i = 0 <= i && i < size^2 && concat grid !! i == B
+valid grid i = 0 <= i && i < size ^ 2 && concat grid !! i == B
 
 -- Return a new grid reflecting the result of a player making a move at position `i`.
 -- Singleton list is a successful move, empty list denotes failure
 -- E.g. move g1 0 $ turn g1 == [[[O,O,O],[O,X,O],[X,X,X]]]
 --      move g1 1 $ turn g1 == []
 move :: Grid -> Int -> Player -> [Grid]
-move grid i player = [chop size (xs ++ [player] ++ ys) | valid grid i]
-                     where (xs,B:ys) = splitAt i (concat grid)
+move grid i player = [ chop size (xs ++ [player] ++ ys) | valid grid i ]
+  where (xs, B : ys) = splitAt i (concat grid)
 
 -- Break a list into maximal segments of a given length
 -- e.g. chop 2 "helloworld" == ["he","ll","ow","or","ld"]
@@ -120,13 +123,14 @@ chop n xs = take n xs : chop n (drop n xs)
 -- Read a number from stdin, with error checking
 -- (Note: support for deleting with Backspace not included)
 getNat :: String -> IO Int
-getNat prompt = do putStr prompt
-                   xs <- getLine
-                   if xs /= [] && all isDigit xs then
-                     return (read xs)
-                   else
-                     do putStrLn "ERROR: Invalid number"
-                        getNat prompt
+getNat prompt = do
+  putStr prompt
+  xs <- getLine
+  if xs /= [] && all isDigit xs
+    then return (read xs)
+    else do
+      putStrLn "ERROR: Invalid number"
+      getNat prompt
 
 --
 -- Human vs human
@@ -139,42 +143,50 @@ tictactoe = run empty O
 -- `run` and `run'`
 
 run :: Grid -> Player -> IO ()
-run grid player = do cls
-                     goto (1, 1)
-                     putGrid grid
-                     run' grid player
-                  where cls = putStr "\ESC[2J"
-                        goto (x,y) = putStr ("\ESC[" ++ show y ++ ";" ++ show x ++ "H")
+run grid player = do
+  cls
+  goto (1, 1)
+  putGrid grid
+  run' grid player
+ where
+  cls = putStr "\ESC[2J"
+  goto (x, y) = putStr ("\ESC[" ++ show y ++ ";" ++ show x ++ "H")
 
 run' :: Grid -> Player -> IO ()
-run' grid player | wins O grid = putStrLn "Player O wins!\n"
-                 | wins X grid = putStrLn "Player X wins!\n"
-                 | full grid   = putStrLn "It's a draw!\n"
-                 | otherwise   = do i <- getNat (prompt player)
-                                    case move grid i player of
-                                      []      -> do putStrLn "ERROR: Invalid move"
-                                                    run' grid player
-                                      [grid'] -> run grid' (next player)
-                 where prompt player = "Player " ++ show player ++ ", enter your move: "
+run' grid player
+  | wins O grid = putStrLn "Player O wins!\n"
+  | wins X grid = putStrLn "Player X wins!\n"
+  | full grid = putStrLn "It's a draw!\n"
+  | otherwise = do
+    i <- getNat (prompt player)
+    case move grid i player of
+      [] -> do
+        putStrLn "ERROR: Invalid move"
+        run' grid player
+      [grid'] -> run grid' (next player)
+  where prompt player = "Player " ++ show player ++ ", enter your move: "
 
 --
 -- Game trees
 --
 
-g3 = [[O,B,B],[X,X,O],[X,O,B]] :: Grid    -- A grid in mid-play, with several moves left
+g3 = [[O, B, B], [X, X, O], [X, O, B]] :: Grid    -- A grid in mid-play, with several moves left
 
 data Tree a = Node a [Tree a] deriving Show
 
 -- Build a tree of all possible future moves starting with this grid and player
 gameTree :: Grid -> Player -> Tree Grid
-gameTree grid player = Node grid [gameTree grid' (next player) | grid' <- moves grid player]
+gameTree grid player =
+  Node grid [ gameTree grid' (next player) | grid' <- moves grid player ]
 
 -- Return a list of possible, valid moves for this grid and player
--- E.g. moves g3 O == [[[O,O,B],[X,X,O],[X,O,B]],[[O,B,O],[X,X,O],[X,O,B]],[[O,B,B],[X,X,O],[X,O,O]]]
+-- E.g. moves g3 O == [[[O,O,B],[X,X,O],[X,O,B]],[[O,B,O],[X,X,O],[X,O,B]],
+--                     [[O,B,B],[X,X,O],[X,O,O]]]
 moves :: Grid -> Player -> [Grid]
-moves grid player | won grid  = []
-                  | full grid = []
-                  | otherwise = concat [move grid i player | i <- [0..((size^2) - 1)]]
+moves grid player
+  | won grid  = []
+  | full grid = []
+  | otherwise = concat [ move grid i player | i <- [0 .. ((size ^ 2) - 1)] ]
 
 {-
   FIXME: Seems like the next player is already known. Why include it as a parameter?
@@ -188,8 +200,8 @@ moves grid player | won grid  = []
 -- Prune a tree to a given depth
 -- E.g. prune 5 (gameTree empty O) == ...too long to list...
 prune :: Int -> Tree a -> Tree a
-prune 0 (Node x _)  = Node x []
-prune n (Node x ts) = Node x [prune (n - 1) t | t <- ts]
+prune 0 (Node x _ ) = Node x []
+prune n (Node x ts) = Node x [ prune (n - 1) t | t <- ts ]
 
 -- Maximum prune depth
 depth = 9 :: Int
