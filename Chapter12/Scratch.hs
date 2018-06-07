@@ -31,6 +31,7 @@ sqr' :: [Int] -> [Int]
 sqr' = map' (^ 2)
 
 --
+-- Examples
 
 data Tree a = Leaf a | Node (Tree a) (Tree a) deriving Show
 
@@ -48,6 +49,7 @@ inc'' (Node (Leaf 1) (Leaf 2)) -- Node (Leaf 2) (Leaf 3)
 inc'' :: Functor f => f Int -> f Int
 inc'' = fmap (+ 1)
 
+--
 -- Functor laws:
 
 {-
@@ -78,6 +80,9 @@ instance Applicative [] where
   gs <*> xs = [g x | g <- gs, x <- xs]
 -}
 
+--
+-- Examples
+
 -- We can rewrite the following in applicative style:
 
 {-
@@ -105,6 +110,7 @@ getChars :: Int -> IO String
 getChars 0 = return []
 getChars n = pure (:) <*> getChar <*> getChars (n - 1)
 
+--
 -- Effectful programming
 
 {-
@@ -114,9 +120,11 @@ sequenceA (x:xs) = pure (:) <*> x <*> sequenceA xs
 -}
 
 -- Now we can redefine this more simply:
+
 getChars' :: Int -> IO String
 getChars' n = sequenceA (replicate n getChar)
 
+--
 -- Applicative laws
 {-
   pure id <*> x   = x
@@ -151,6 +159,9 @@ safeDiv :: Int -> Int -> Maybe Int
 safeDiv _ 0 = Nothing
 safeDiv n m = Just (n `div` m)
 
+{-
+eval' (Div (Val 1) (Val 0)) -- Nothing
+-}
 eval' :: Expr -> Maybe Int
 eval' (Val n  ) = Just n
 eval' (Div x y) = case eval' x of
@@ -178,6 +189,9 @@ mx >>= f = case mx of
 
 -- Which allows:
 
+{-
+eval'' (Div (Val 1) (Val 0)) -- Nothing
+-}
 eval'' :: Expr -> Maybe Int
 eval'' (Val n  ) = Just n
 eval'' (Div x y) = eval'' x >>= \n -> eval'' y >>= \m -> safeDiv n m
@@ -196,6 +210,9 @@ eval'' (Div x y) = eval'' x >>= \n -> eval'' y >>= \m -> safeDiv n m
      f x1 x2 ... xn
 -}
 
+{-
+eval''' (Div (Val 1) (Val 0)) -- Nothing
+-}
 eval''' :: Expr -> Maybe Int
 eval''' (Val n  ) = Just n
 eval''' (Div x y) = do
@@ -211,6 +228,7 @@ class Applicative m => Monad m where
   (>>=) :: m a -> (a -> m b) -> m b
 -}
 
+--
 -- Examples
 
 {-
@@ -228,11 +246,19 @@ instance Monad [] where
 
 -- This has the effect of collecting all the results in a list:
 
+{-
+pairs [1,2] [3,4] -- [(1,3),(1,4),(2,3),(2,4)]
+-}
 pairs :: [a] -> [b] -> [(a, b)]
 pairs xs ys = do
   x <- xs
   y <- ys
   return (x, y)
+
+-- Q: How do we write this with (>>=)?
+
+pairs' :: [a] -> [b] -> [(a, b)]
+pairs' = undefined
 
 {-
 instance Monad IO where
@@ -243,6 +269,7 @@ instance Monad IO where
   mx >>= f = ...(built-in)...
 -}
 
+--
 -- The state monad
 -- See diagrams in the book!
 
@@ -262,35 +289,39 @@ instance Functor ST where
 
 instance Applicative ST where
   -- Transforms a value into a ST that simply returns this value
+  -- without modifying the state
   pure :: a -> ST a
   pure x = S (\s -> (x, s))
 
-  -- Applies a ST that returns a function to a ST that returns an argument to
-  -- give a ST that returns the result of applying the function to the argument
+  -- Applies a ST that returns a function (`stf`) to a ST that returns an argument (`stx`)
+  -- to give a ST that returns the result of applying the function to the argument (`f x`)
   (<*>) :: ST (a -> b) -> ST a -> ST b
   stf <*> stx = S (\s ->
                 let (f, s')  = app stf s
                     (x, s'') = app stx s' in (f x, s''))
 
 instance Monad ST where
-  -- Applies a ST to an initial state s, then applies the function f to the
-  -- resulting value x to give a new ST f x, which is then applied to the new
-  -- state s' to give the final result
+  -- Applies a ST to an initial state `s`, then applies the function `f` to the
+  -- resulting value `x` to give a new ST `f x`, which is then applied to the new
+  -- state `s'` to give the final result
   (>>=) :: ST a -> (a -> ST b) -> ST b
   st >>= f = S (\s -> let (x, s') = app st s in app (f x) s')
 
+--
 -- Relabelling trees
--- An example of stateful programming
+-- (an example of stateful programming)
 
 -- Defined above:
 -- data Tree a = Leaf a | Node (Tree a) (Tree a) deriving Show
 
-tree = Node (Node (Leaf 'a') (Leaf 'b')) (Leaf 'c') :: Tree Char
+tree = Node (Node (Leaf 'a') (Leaf 'b')) (Leaf 'c')
 
--- Relabel a tree with a sequence of ints, return the next fresh int
--- Notice that we need to thread an int state through the computation
--- E.g. fst $ rlabel tree 0 == Node (Node (Leaf 0) (Leaf 1)) (Leaf 2)
---      snd $ rlabel tree 0 == 3
+-- Relabel a tree with a sequence of ints, return the next fresh int:
+-- (Notice that we need to thread an int state through the computation)
+{-
+fst $ rlabel tree 0 -- Node (Node (Leaf 0) (Leaf 1)) (Leaf 2)
+snd $ rlabel tree 0 -- 3
+-}
 rlabel :: Tree a -> Int -> (Tree Int, Int)
 rlabel (Leaf _  ) n = (Leaf n, n + 1)
 rlabel (Node l r) n = (Node l' r', n'')
@@ -303,15 +334,21 @@ rlabel (Node l r) n = (Node l' r', n'')
 fresh = S (\n -> (n, n + 1)) :: ST Int
 
 -- Rewrite `rlabel` in applicative style:
--- E.g. fst (app (alabel tree) 0) == Node (Node (Leaf 0) (Leaf 1)) (Leaf 2)
---      snd (app (alabel tree) 0) == 3
+-- (remembering to apply `app` to the result in order to get at the S value)
+{-
+fst $ app (alabel tree) 0 -- Node (Node (Leaf 0) (Leaf 1)) (Leaf 2)
+snd $ app (alabel tree) 0 -- 3
+-}
 alabel :: Tree a -> ST (Tree Int)
 alabel (Leaf _  ) = Leaf <$> fresh
 alabel (Node l r) = Node <$> alabel l <*> alabel r
 
 -- Monadic version:
--- E.g. fst (app (mlabel tree) 0) == Node (Node (Leaf 0) (Leaf 1)) (Leaf 2)
---      snd (app (mlabel tree) 0) == 3
+-- (But kind of ugly if you ask me)
+{-
+fst $ app (mlabel tree) 0 -- Node (Node (Leaf 0) (Leaf 1)) (Leaf 2)
+snd $ app (mlabel tree) 0 -- 3
+-}
 mlabel :: Tree a -> ST (Tree Int)
 mlabel (Leaf _) = do
   n <- fresh
@@ -321,40 +358,52 @@ mlabel (Node l r) = do
   r' <- mlabel r
   return (Node l' r')
 
+--
 -- Generic functions
 
 mapM' :: Monad m => (a -> m b) -> [a] -> m [b]
-mapM' f []       = return []
+mapM' _ []       = return []
 mapM' f (x : xs) = do
   y  <- f x
   ys <- mapM' f xs
   return (y : ys)
 
 -- Convert a digit char to an int
--- E.g. mapM' conv "1234" == Just [1,2,3,4]
--- (note: map conv "1234" == [Just 1,Just 2,Just 3,Just 4])
+{-
+mapM' conv "1234" -- Just [1,2,3,4]
+mapM' conv "123a" -- Nothing
+-- note:
+map conv "1234"   -- [Just 1,Just 2,Just 3,Just 4]
+-}
 conv :: Char -> Maybe Int
 conv c | isDigit c = Just (digitToInt c)
        | otherwise = Nothing
 
--- E.g. filterM' (\x -> [True,False]) [1,2,3] == [[1,2,3],[1,2],[1,3],[1],[2,3],[2],[3],[]]
+{-
+filterM' (\x -> [True,False]) [1,2,3] -- [[1,2,3],[1,2],[1,3],[1],[2,3],[2],[3],[]]
+-}
 -- "all possible ways of including (True) or excluding (False) each element of the list"
 filterM' :: Monad m => (a -> m Bool) -> [a] -> m [a]
-filterM' p []       = return []
+filterM' _ []       = return []
 filterM' p (x : xs) = do
   b  <- p x
   ys <- filterM' p xs
   return (if b then x : ys else ys)
 
 -- Generalisation of `concat` - flattens a nested monadic value
--- E.g. join' [[1,2],[3,4],[5,6]] == [1,2,3,4,5,6]
---      join' (Just (Just 1)) == Just 1
+{-
+join' [[1,2],[3,4],[5,6]] -- [1,2,3,4,5,6]
+join' (Just (Just 1))     -- Just 1
+join' (Just Nothing)      -- Nothing
+join' Nothing             -- Nothing
+-}
 join' :: Monad m => m (m a) -> m a
 -- join' mmx = do { mx <- mmx; x <- mx; return x }
 join' mmx = do
   mx <- mmx
   mx
 
+--
 -- Monad laws
 
 {-
@@ -362,4 +411,3 @@ join' mmx = do
   mx >>= return    = mx
   (mx >>= f) >>= g = mx >>= (\x -> (f x >>= g))
 -}
-
