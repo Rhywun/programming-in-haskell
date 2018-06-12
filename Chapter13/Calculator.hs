@@ -14,7 +14,7 @@ import           Data.Char
 newtype Parser a = P (String -> [(a,String)])
 
 parse :: Parser a -> String -> [(a, String)]
-parse (P p) inp = p inp
+parse (P p) = p
 
 item :: Parser Char
 item = P
@@ -29,7 +29,8 @@ instance Functor Parser where
    -- fmap :: (a -> b) -> Parser a -> Parser b
    fmap g p = P (\inp -> case parse p inp of
                             []        -> []
-                            [(v,out)] -> [(g v, out)])
+                            [(v,out)] -> [(g v, out)]
+                            ((_, _):_:_) -> undefined)
 
 instance Applicative Parser where
    -- pure :: a -> Parser a
@@ -38,24 +39,27 @@ instance Applicative Parser where
    -- <*> :: Parser (a -> b) -> Parser a -> Parser b
    pg <*> px = P (\inp -> case parse pg inp of
                              []        -> []
-                             [(g,out)] -> parse (fmap g px) out)
+                             [(g,out)] -> parse (fmap g px) out
+                             ((_, _):_:_) -> undefined)
 
 instance Monad Parser where
    -- (>>=) :: Parser a -> (a -> Parser b) -> Parser b
    p >>= f = P (\inp -> case parse p inp of
                            []        -> []
-                           [(v,out)] -> parse (f v) out)
+                           [(v,out)] -> parse (f v) out
+                           ((_, _):_:_) -> undefined)
 
 -- Making choices
 
 instance Alternative Parser where
    -- empty :: Parser a
-   empty = P (\inp -> [])
+   empty = P (const [])
 
    -- (<|>) :: Parser a -> Parser a -> Parser a
    p <|> q = P (\inp -> case parse p inp of
                            []        -> parse q inp
-                           [(v,out)] -> [(v,out)])
+                           [(v,out)] -> [(v,out)]
+                           ((_, _):_:_) -> undefined)
 
 -- Derived primitives
 
@@ -85,8 +89,8 @@ char x = sat (== x)
 string :: String -> Parser String
 string []       = return []
 string (x : xs) = do
-  char x
-  string xs
+  _ <- char x
+  _ <- string xs
   return (x : xs)
 
 ident :: Parser String
@@ -96,14 +100,12 @@ ident = do
   return (x : xs)
 
 nat :: Parser Int
-nat = do
-  xs <- some digit
-  return (read xs)
+nat = read <$> some digit
 
 int :: Parser Int
 int =
   do
-      char '-'
+      _ <- char '-'
       n <- nat
       return (-n)
     <|> nat
@@ -112,7 +114,7 @@ int =
 
 space :: Parser ()
 space = do
-  many (sat isSpace)
+  _ <- many (sat isSpace)
   return ()
 
 token :: Parser a -> Parser a
