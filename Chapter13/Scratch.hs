@@ -48,9 +48,13 @@ instance Functor Parser where
 parse (pure 1) "abc" -- [(1,"abc")]
 -}
 instance Applicative Parser where
+  -- Transform a value into a parser that always succeeds with this value as its result
   pure :: a -> Parser a
   pure v = P (\inp -> [(v, inp)])
 
+  -- Apply a parser that returns a function (pg) to a parser that returns an argument (px)
+  -- to give a parser that returns the result of applying the function to the argument,
+  -- and only succeeds if all the components succeed
   (<*>) :: Parser (a -> b) -> Parser a -> Parser b
   pg <*> px = P (\inp -> case parse pg inp of
     []               -> []
@@ -66,6 +70,8 @@ parse three "abcd" -- [(('a','c'),"d")]
 -}
 three :: Parser (Char, Char)
 three = g <$> item <*> item <*> item where g x _ z = (x, z)
+
+-- Let's make Parser an instance of Monad so we can use the `do` syntax:
 
 instance Monad Parser where
   (>>=) :: Parser a -> (a -> Parser b) -> Parser b
@@ -113,9 +119,11 @@ parse (item <|> return 'd') "abc"  -- [('a',"bc")]
 parse (empty <|> return 'd') "abc" -- [('d',"abc")]
 -}
 instance Alternative Parser where
+  -- The parser that always fails regardless of its input string
   empty :: Parser a
   empty = P (const [])
 
+  -- Returns the result of the first parser if that succeeds, otherwise the result of the 2nd
   (<|>) :: Parser a -> Parser a -> Parser a
   p <|> q = P (\inp -> case parse p inp of
     []               -> parse q inp
@@ -127,33 +135,33 @@ instance Alternative Parser where
 --
 
 -- Returns a parser for single characters that satisfy the predicate p
-sat :: (Char -> Bool) -> Parser Char
-sat p = do
+satisfy :: (Char -> Bool) -> Parser Char
+satisfy p = do
   x <- item
   if p x then return x else empty
 
 digit :: Parser Char
-digit = sat isDigit
+digit = satisfy isDigit
 
 lower :: Parser Char
-lower = sat isLower
+lower = satisfy isLower
 
 upper :: Parser Char
-upper = sat isUpper
+upper = satisfy isUpper
 
 letter :: Parser Char
-letter = sat isLetter
+letter = satisfy isLetter
 
-alphanum :: Parser Char
-alphanum = sat isAlphaNum
+alphaNum :: Parser Char
+alphaNum = satisfy isAlphaNum
 
 {-
 parse (char 'a') "abc" -- [('a',"bc")]
 -}
 char :: Char -> Parser Char
-char x = sat (== x)
+char x = satisfy (== x)
 
--- Parses a string
+-- Parses a given string
 {-
 parse (string "abc") "abcdef" -- [("abc","def")]
 parse (string "abc") "ab1234" -- []
@@ -165,37 +173,39 @@ string (x : xs) = do
   _ <- string xs
   return (x : xs)
 
--- many/some - already defined in Alternative
+-- many (zero or more)
+-- some (one or more)
+-- Already defined in Alternative
 {-
 parse (many digit) "123abc" -- [("123","abc")]
 parse (many digit) "abc"    -- [("","abc")]
 parse (some digit) "abc"    -- []
 -}
 
--- A parser for identifiers
+-- A parser for identifiers (a lowercase letter followed by zero or more alphanumerics)
 {-
-parse ident' "abc def" -- [("abc"," def")]
+parse identifier' "abc def" -- [("abc"," def")]
 -}
-ident' :: Parser String
-ident' = do
+identifier' :: Parser String
+identifier' = do
   x  <- lower
-  xs <- many alphanum
+  xs <- many alphaNum
   return (x : xs)
 
--- A parser for natural numbers
+-- A parser for natural numbers (one or more digits)
 {-
-parse nat' "123abc" -- [(123,"abc")]
+parse natural' "123abc" -- [(123,"abc")]
 -}
-nat' :: Parser Int
-nat' = read <$> some digit
+natural' :: Parser Int
+natural' = read <$> some digit
 
--- A parser that ignores whitespace
+-- A parser for spacing (zero or more whitespace characters)
 {-
 parse space "123 abc" -- [((),"123 abc")]
 -}
 space :: Parser ()
 space = do
-  _ <- many (sat isSpace)
+  _ <- many (satisfy isSpace)
   return ()
 
 -- A parser for integers
@@ -207,15 +217,15 @@ int' :: Parser Int
 int' =
   do
       _ <- char '-'
-      n <- nat'
+      n <- natural'
       return (-n)
-    <|> nat'
+    <|> natural'
 
 --
 -- 13.7 - Handling spacing
 --
 
--- Returns a parser which ignores leading and trailing whitespace
+-- Returns a parser which ignores leading and trailing whitespace after applying a parser (p)
 token :: Parser a -> Parser a
 token p = do
   space
@@ -223,11 +233,14 @@ token p = do
   space
   return v
 
-ident :: Parser String
-ident = token ident'
+{-
+parse identifier " abc 123 " -- [("abc","123 ")]
+-}
+identifier :: Parser String
+identifier = token identifier'
 
-nat :: Parser Int
-nat = token nat'
+natural :: Parser Int
+natural = token natural'
 
 int :: Parser Int
 int = token int'
@@ -238,17 +251,17 @@ symbol xs = token (string xs)
 -- A parser for a non-empty list of natural numbers [n1, n2, ... nx] that
 -- ignores spacing around tokens
 {-
-parse nats " [1, 2, 3] " -- [([1,2,3],"")]
-parse nats "[1,2,]"      -- []
+parse naturals " [1, 2, 3] " -- [([1,2,3],"")]
+parse naturals "[1,2,]"      -- []
 -}
-nats :: Parser [Int]
-nats = do
+naturals :: Parser [Int]
+naturals = do
   _  <- symbol "["
-  n  <- nat
+  n  <- natural
   ns <- many
     (do
       _ <- symbol ","
-      nat
+      natural
     )
   _ <- symbol "]"
   return (n : ns)
@@ -293,7 +306,7 @@ factor =
       _ <- symbol ")"
       return e
     )
-    <|> nat
+    <|> natural
 
 {-
 eval "2*3+4"        -- 10
@@ -311,6 +324,5 @@ eval xs = case parse expr xs of
 
 --
 -- 13.9 - Calculator
--- see Calculator.hs
 --
 
