@@ -337,7 +337,8 @@ getCh = do
   return x
 
 beep :: IO ()
-beep = putStr "\BEL" -- Doesn't do anything
+-- beep = putStr "\BEL"
+beep = putStr "^"           -- Exercise 9
 
 cls :: IO ()
 cls = putStr "\ESC[2J"
@@ -426,3 +427,83 @@ run = do
   cls
   showBox
   clear
+
+--
+-- 13.11 - Exercises
+--
+
+-- 1
+
+{-
+parse comment "beep"               -- []
+parse comment "-- i'm a comment\n" -- [((),"")]
+-}
+comment :: Parser ()
+comment = do
+  _ <- string "--"
+  _ <- many (satisfy (/= '\n'))
+  _ <- string "\n"
+  return ()
+
+-- 2
+-- PASS
+
+-- 3
+-- PASS
+
+-- 4
+-- ?
+
+-- 5
+-- ?
+
+-- 6
+
+expr' :: Parser Int
+expr' = do
+  t <- term'
+  (do
+      _ <- symbol "+"
+      e <- expr'
+      return (t + e)
+    )
+    <|> (do
+          _ <- symbol "-"
+          e <- expr'
+          return (t - e)
+        )
+    <|> return t
+
+term' :: Parser Int
+term' = do
+  f <- factor'
+  (do
+      _ <- symbol "*"
+      t <- term
+      return (f * t)
+    )
+    <|> (do
+          _ <- symbol "/"
+          t <- term'
+          return (f `div` t)
+        )
+    <|> return f
+
+factor' :: Parser Int
+factor' =
+  (do
+      _ <- symbol "("
+      e <- expr
+      _ <- symbol ")"
+      return e
+    )
+    <|> int
+
+-- 7
+-- PASS
+
+-- 8
+-- PASS
+
+-- 9
+-- see attempt above - doesn't work
