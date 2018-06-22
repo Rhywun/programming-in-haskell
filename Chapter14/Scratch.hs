@@ -137,4 +137,25 @@ toList :: t a -> [a]
 
 See text for how `toList` can be used to define the other primitives in terms
 of the corresponding primitives for lists.
+
+Finally:
+
+fold      = foldMap id
+foldMap f = foldr (mappend . f) mempty
+toList    = foldMap (\x -> [x])
 -}
+
+-- Generic functions
+
+average' :: [Int] -> Int
+average' ns = sum ns `div` length ns
+
+average :: Foldable t => t Int -> Int
+average ns = sum ns `div` length ns
+
+gf1 :: Int
+gf1 = average [1..10] -- 5
+
+gf2 :: Int
+gf2 = average (Node (Leaf 1) (Leaf 3)) -- 2
+
