@@ -154,8 +154,56 @@ average :: Foldable t => t Int -> Int
 average ns = sum ns `div` length ns
 
 gf1 :: Int
-gf1 = average [1..10] -- 5
+gf1 = average [1 .. 10] -- 5
 
 gf2 :: Int
 gf2 = average (Node (Leaf 1) (Leaf 3)) -- 2
 
+gf3 :: Bool
+gf3 = and [True, False, True] -- False
+
+gf4 :: Bool
+gf4 = or (Node (Leaf True) (Leaf False)) -- True
+
+gf5 :: Bool
+gf5 = all even [1, 2, 3] -- False
+
+gf6 :: Bool
+gf6 = any even (Node (Leaf 1) (Leaf 2)) -- True
+
+gf7 :: [Char]
+gf7 = concat ["ab", "cd", "ef"] -- "abcdef"
+
+gf8 :: [Int]
+gf8 = concat (Node (Leaf [1, 2]) (Leaf [3])) -- [1,2,3]
+
+--
+-- 14.3 - Traversables
+--
+
+-- Compare:
+
+map' :: (a -> b) -> [a] -> [b]
+map' _ []       = []
+map' g (x : xs) = g x : map g xs
+
+traverse' :: (a -> Maybe b) -> [a] -> Maybe [b]
+traverse' _ []       = pure []
+traverse' g (x : xs) = (:) <$> g x <*> traverse' g xs
+
+-- Example:
+
+-- Decrements an integer if it is positive
+dec :: Int -> Maybe Int
+dec n = if n > 0 then Just (n - 1) else Nothing
+
+t1 :: Maybe [Int]
+t1 = traverse' dec [1, 2, 3] -- Just [0,1,2]
+
+t2 :: Maybe [Int]
+t2 = traverse' dec [2, 1, 0] -- Nothing
+
+{-
+class (Functor t, Foldable t) => Traversable t where
+  traverse :: Applicative f => (a -> f b) -> t a > f (t b)
+-}
