@@ -187,6 +187,7 @@ map' :: (a -> b) -> [a] -> [b]
 map' _ []       = []
 map' g (x : xs) = g x : map g xs
 
+-- Like `map` except the f can fail
 traverse' :: (a -> Maybe b) -> [a] -> Maybe [b]
 traverse' _ []       = pure []
 traverse' g (x : xs) = (:) <$> g x <*> traverse' g xs
@@ -194,16 +195,72 @@ traverse' g (x : xs) = (:) <$> g x <*> traverse' g xs
 -- Example:
 
 -- Decrements an integer if it is positive
-dec :: Int -> Maybe Int
-dec n = if n > 0 then Just (n - 1) else Nothing
+decIfPos :: Int -> Maybe Int
+decIfPos n = if n > 0 then Just (n - 1) else Nothing
 
 t1 :: Maybe [Int]
-t1 = traverse' dec [1, 2, 3] -- Just [0,1,2]
+t1 = traverse' decIfPos [1, 2, 3] -- Just [0,1,2]
 
 t2 :: Maybe [Int]
-t2 = traverse' dec [2, 1, 0] -- Nothing
+t2 = traverse' decIfPos [2, 1, 0] -- Nothing
 
 {-
 class (Functor t, Foldable t) => Traversable t where
   traverse :: Applicative f => (a -> f b) -> t a > f (t b)
 -}
+
+-- Examples:
+
+-- List
+
+{-
+instance Traversable [] where
+  traverse :: Applicative f => (a -> f b) -> [a] -> f [b]
+  traverse _ [] = pure []
+  traverse g (x : xs) = (:) <$> g x <*> traverse g xs
+-}
+
+-- Tree
+
+instance Functor Tree where
+  fmap :: (a -> b) -> Tree a -> Tree b
+  fmap g (Leaf x)   = Leaf (g x)
+  fmap g (Node l r) = Node (fmap g l) (fmap g r)
+
+instance Traversable Tree where
+  traverse :: Applicative f => (a -> f b) -> Tree a -> f (Tree b)
+  traverse g (Leaf x) = pure Leaf <*> g x
+  traverse g (Node l r) = Node <$> traverse g l <*> traverse g r
+
+t3 :: Maybe (Tree Int)
+t3 = traverse decIfPos (Node (Leaf 1) (Leaf 2)) -- Just (Node (Leaf 0) (Leaf 1))
+
+t4 :: Maybe (Tree Int)
+t4 = traverse decIfPos (Node (Leaf 0) (Leaf 1)) -- Nothing
+
+-- Other primitives and defaults
+
+-- Transforms a data structure whose elements may fail (for example) into
+-- a data structure that may fail
+{-
+sequenceA :: Applicative f => t (f a) -> f (t a)
+sequenceA = traverse id
+-}
+
+t5 :: Maybe [Integer]
+t5 = sequenceA [Just 1, Just 2, Just 3] -- Just [1,2,3]
+
+t6 :: Maybe [Integer]
+t6 = sequenceA [Just 1,Nothing,Just 3] -- Nothing
+
+t7 :: Maybe (Tree Integer)
+t7 = sequenceA (Node (Leaf (Just 1)) (Leaf (Just 2))) -- Just (Node (Leaf 1) (Leaf 2))
+
+t8 :: Maybe (Tree Integer)
+t8 = sequenceA (Node (Leaf (Just 1)) (Leaf Nothing)) -- Nothing
+
+{-
+  traverse :: Applicative f => (a -> f b) -> [a] -> f [b]
+  traverse g = sequenceA . fmap g
+-}
+
